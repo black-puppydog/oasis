@@ -1014,6 +1014,12 @@ module.exports = cooler => {
       debug("Published: %O", body);
       return cooler.get(ssb.publish, body);
     },
+    publish_json: async options => {
+      const ssb = await cooler.connect();
+
+      debug("Published: %O", options);
+      return cooler.get(ssb.publish, options);
+    },
     reply: async ({ parent, message }) => {
       message.root = parent.key;
       message.fork = lodash.get(parent, "value.content.root");

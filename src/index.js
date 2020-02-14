@@ -46,6 +46,7 @@ const { about, blob, friend, meta, post, vote } = require("./models")(cooler);
 const {
   authorView,
   commentView,
+  rawJsonView,
   listView,
   markdownView,
   metaView,
@@ -215,6 +216,9 @@ router
       });
     };
     ctx.body = await profile();
+  })
+  .get("/raw_json/", async ctx => {
+    ctx.body = await rawJsonView();
   })
   .get("/json/:message", async ctx => {
     const { message } = ctx.params;
@@ -468,6 +472,12 @@ router
     };
     ctx.body = await publish({ text });
     ctx.redirect("/");
+  })
+  .post("/publish_json/", koaBody(), async ctx => {
+    const text = String(ctx.request.body.text);
+    const obj = JSON.parse(text);
+    ctx.body = await post.publish_json(obj);
+    ctx.redirect(`/thread/${encodeURIComponent(ctx.body.key)}`);
   })
   .post("/follow/:feed", koaBody(), async ctx => {
     const { feed } = ctx.params;

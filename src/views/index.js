@@ -302,6 +302,42 @@ exports.commentView = async ({ messages, myFeedId, parentMessage }) => {
   );
 };
 
+exports.rawJsonView = async () => {
+  const action = `/publish_json`;
+  const method = "post";
+
+  return template(
+    p(
+      "Publish any  ",
+      a({ href: "https://en.wikipedia.org/wiki/JSON" }, "JSON"),
+      " message on your feed. This can be useful for prototyping,",
+      " or for doing things that Oasis doesn't support (yet). ",
+      "To insert line breaks into strings, use \\n instead of ",
+      'just hitting enter, and \\" for quotes.'
+    ),
+    form(
+      { action, method },
+      textarea(
+        {
+          autofocus: true,
+          required: true,
+          name: "text"
+        },
+        "{\n",
+        '    "type": "test_type",\n',
+        '    "your_field_name": "whatever you want!"\n',
+        "}"
+      ),
+      button(
+        {
+          type: "submit"
+        },
+        "Publish"
+      )
+    )
+  );
+};
+
 exports.listView = ({ messages }) =>
   template(messages.map(msg => post({ msg })));
 

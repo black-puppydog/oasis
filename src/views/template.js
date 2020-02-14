@@ -50,7 +50,8 @@ module.exports = (...elements) => {
           li(a({ href: "/mentions" }, "💬 Mentions")),
           li(a({ href: "/inbox" }, "✉️ Private")),
           li(a({ href: "/search" }, "🔍 Search")),
-          li(a({ href: "/meta" }, "⚙ Settings"))
+          li(a({ href: "/meta" }, "⚙ Settings")),
+          li(a({ href: "/raw_json" }, "🌠 Manual Mode"))
         )
       ),
       main({ id: "content" }, elements)
