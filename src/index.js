@@ -124,6 +124,8 @@ process.argv = [];
 
 const http = require("./http");
 
+const toStream = require("pull-stream-to-stream");
+const cbor = require("cbor");
 const koaBody = require("koa-body");
 const { nav, ul, li, a } = require("hyperaxe");
 const open = require("open");
@@ -375,6 +377,60 @@ router
   .get("/publish/custom/", async ctx => {
     ctx.body = await publishCustomView();
   })
+  .get("/cbor/:feed", async ctx => {
+    const { feed } = ctx.params;
+    if (config.public) {
+      const isPubliclyHosted = await about.publicWebHosting(feed);
+      if (!isPubliclyHosted) {
+        throw new Error(
+          "This feed is not publicly hosted. You can access it through the SSB network though."
+        );
+      }
+    }
+    const ssb = await cooler.open();
+    const msgStream = pull(
+      ssb.createUserStream({ id: feed }),
+      pull.map(msg => cbor.encodeOne(msg, { highWaterMark: 65535 }))
+    );
+    const nodeMsgStream = toStream.source(msgStream);
+    ctx.type = "application/cbor";
+    ctx.response.body = nodeMsgStream;
+  })
+  .get("/cbor/:message", async ctx => {
+    if (config.public) {
+      throw new Error(
+        "Sorry, many actions are unavailable when Oasis is running in public mode. Please run Oasis in the default mode and try again."
+      );
+    }
+    const { message } = ctx.params;
+    console.log(message);
+    ctx.type = "application/cbor";
+    const makeCbor = async message => {
+      const messageObj = await meta.get(message);
+      console.log(messageObj);
+      return cbor.encodeOne(messageObj, { highWaterMark: 65535 });
+    };
+    ctx.body = await makeCbor(message);
+  })
+  .get("/json/:feed", async ctx => {
+    const { feed } = ctx.params;
+    if (config.public) {
+      const isPubliclyHosted = await about.publicWebHosting(feed);
+      if (!isPubliclyHosted) {
+        throw new Error(
+          "This feed is not publicly hosted. You can access it through the SSB network though."
+        );
+      }
+    }
+
+    const ssb = await cooler.open();
+    const msgStream = pull(
+      ssb.createUserStream({ id: feed }),
+      pull.map(msg => JSON.stringify(msg))
+    );
+    const outStream = toStream.source(msgStream);
+    ctx.body = outStream;
+  })
   .get("/json/:message", async ctx => {
     if (config.public) {
       throw new Error(
@@ -388,6 +444,11 @@ router
       return JSON.stringify(json, null, 2);
     };
     ctx.body = await json(message);
+  })
+  .get("/message/:message", async ctx => {
+    const { msgId } = ctx.params;
+    const msg = await post.get(msgId);
+    ctx.body = JSON.stringify(msg);
   })
   .get("/blob/:blobId", async ctx => {
     const { blobId } = ctx.params;
